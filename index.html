@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Korgoren Tracker Pro – Daily Overview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{
+  --bg:#0f172a;
+  --card:#111827;
+  --sidebar:#020617;
+  --accent:#38bdf8;
+  --success:#22c55e;
+  --danger:#ef4444;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+}
+*{box-sizing:border-box;font-family:Arial,sans-serif;}
+body{margin:0;display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+.sidebar{width:220px;background:var(--sidebar);padding:20px;display:flex;flex-direction:column;}
+.sidebar h2{color:var(--accent);margin-bottom:20px;}
+.sidebar button{background:none;border:none;color:var(--text);padding:10px;margin-bottom:6px;text-align:left;cursor:pointer;border-radius:5px;}
+.sidebar button:hover{background:var(--accent);color:black;}
+.main{flex:1;padding:20px;overflow-y:auto;}
+.card{background:var(--card);padding:15px;margin-bottom:20px;border-radius:10px;}
+input, select, textarea{width:100%;padding:8px;margin:5px 0;border-radius:5px;border:1px solid #1f2937;background:#020617;color:white;}
+textarea{resize:vertical;}
+button.action{background:var(--accent);color:black;border:none;padding:10px;margin-top:10px;cursor:pointer;border-radius:5px;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{border-bottom:1px solid #1f2937;padding:8px;text-align:left;}
+.status{color:var(--success);font-size:12px;margin-top:10px;}
+.summary-card{margin-bottom:15px;padding:10px;background:#1f2937;border-radius:8px;}
+.summary-card h4{margin:0;}
+.summary-card table{margin-top:5px;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+<div class="sidebar">
+<h2>Korgoren Tracker</h2>
+<button onclick="show('dashboard')">Dashboard (Today)</button>
+<button onclick="show('lectures')">Lectures</button>
+<button onclick="show('revision')">Revision</button>
+<button onclick="show('skills')">Skills</button>
+<button onclick="show('projects')">Projects</button>
+<button onclick="show('interactions')">Interactions</button>
+<button onclick="show('transactions')">Transactions</button>
+<hr>
+<button class="action" onclick="exportPDF()">Export PDF (Today)</button>
+<p class="status" id="status">Auto-saving enabled</p>
+</div>
+
+<div class="main">
+
+<!-- Landing Dashboard -->
+<div id="dashboard" class="card">
+<h2>📊 Today's Overview</h2>
+<div id="summaryCards"></div>
+</div>
+
+<!-- Lectures -->
+<div id="lectures" class="card" style="display:none">
+<h3>🎓 Add Lecture</h3>
+<select id="lectureUnit">
+  <option>BITC 221 – Application Programming</option>
+  <option>BITC 222 – Internet and Web Design</option>
+  <option>COMP 222 – Artificial Intelligence</option>
+  <option>COMP 224 – Operating Systems</option>
+  <option>COMP 225 – Data Structures</option>
+  <option>PHYS 222 – Circuit Theory</option>
+  <option>BPPM 222 – Project Planning</option>
+  <option>BITC 223 – Business System Modelling</option>
+</select>
+<input id="lectureTopic" placeholder="Topic">
+<input id="lectureDuration" placeholder="Duration">
+<input id="lectureDate" type="date" value="">
+<textarea id="lectureReflection" placeholder="Reflection"></textarea>
+<button class="action" onclick="addLecture()">Add Lecture</button>
+<table id="lectureTable">
+<tr><th>Unit</th><th>Topic</th><th>Duration</th><th>Reflection</th><th>Date</th></tr>
+</table>
+</div>
+
+<!-- Revision -->
+<div id="revision" class="card" style="display:none">
+<h3>📖 Add Revision</h3>
+<select id="revisionUnit">
+  <option>BITC 221 – Application Programming</option>
+  <option>BITC 222 – Internet and Web Design</option>
+  <option>COMP 222 – Artificial Intelligence</option>
+  <option>COMP 224 – Operating Systems</option>
+  <option>COMP 225 – Data Structures</option>
+  <option>PHYS 222 – Circuit Theory</option>
+  <option>BPPM 222 – Project Planning</option>
+  <option>BITC 223 – Business System Modelling</option>
+</select>
+<input id="revisionTopic" placeholder="Topic">
+<input id="revisionDuration" placeholder="Duration">
+<select id="revisionMethod">
+  <option>Reading</option>
+  <option>Practice</option>
+  <option>Past Papers</option>
+  <option>Group Discussion</option>
+</select>
+<input id="revisionDate" type="date" value="">
+<textarea id="revisionReflection" placeholder="Reflection"></textarea>
+<button class="action" onclick="addRevision()">Add Revision</button>
+<table id="revisionTable">
+<tr><th>Unit</th><th>Topic</th><th>Duration</th><th>Method</th><th>Reflection</th><th>Date</th></tr>
+</table>
+</div>
+
+<!-- Skills -->
+<div id="skills" class="card" style="display:none">
+<h3>💻 Add Skill</h3>
+<input id="skillName" placeholder="Skill / Technology">
+<input id="skillDuration" placeholder="Duration">
+<textarea id="skillReflection" placeholder="Reflection / What I Learned"></textarea>
+<button class="action" onclick="addSkill()">Add Skill</button>
+<table id="skillTable">
+<tr><th>Skill</th><th>Duration</th><th>Reflection</th></tr>
+</table>
+</div>
+
+<!-- Projects -->
+<div id="projects" class="card" style="display:none">
+<h3>🧪 Add Project</h3>
+<input id="projectName" placeholder="Project Name">
+<input id="projectDuration" placeholder="Duration">
+<textarea id="projectReflection" placeholder="Reflection / Work Done"></textarea>
+<select id="projectCommit"><option>Yes</option><option>No</option></select>
+<button class="action" onclick="addProject()">Add Project</button>
+<table id="projectTable">
+<tr><th>Project</th><th>Duration</th><th>Reflection</th><th>Git Commit</th></tr>
+</table>
+</div>
+
+<!-- Interactions -->
+<div id="interactions" class="card" style="display:none">
+<h3>🤝 Add Interaction</h3>
+<input id="interactionPerson" placeholder="Person / Group">
+<select id="interactionType">
+  <option>Academic</option>
+  <option>Social</option>
+  <option>Professional</option>
+  <option>Personal</option>
+</select>
+<input id="interactionTopic" placeholder="Topic / Discussion">
+<input id="interactionImpact" placeholder="Impact (1-5)">
+<textarea id="interactionReflection" placeholder="Reflection / Outcome"></textarea>
+<button class="action" onclick="addInteraction()">Add Interaction</button>
+<table id="interactionTable">
+<tr><th>Person</th><th>Type</th><th>Topic</th><th>Impact</th><th>Reflection</th></tr>
+</table>
+</div>
+
+<!-- Transactions -->
+<div id="transactions" class="card" style="display:none">
+<h3>💰 Add Transaction</h3>
+<select id="transactionType"><option>Income</option><option>Expense</option></select>
+<input id="transactionAmount" placeholder="Amount">
+<input id="transactionPurpose" placeholder="Purpose">
+<button class="action" onclick="addTransaction()">Add Transaction</button>
+<table id="transactionTable">
+<tr><th>Type</th><th>Amount</th><th>Purpose</th></tr>
+</table>
+</div>
+
+<script>
+// Initialize database
+let db={lectures:[],revision:[],skills:[],projects:[],interactions:[],transactions:[]};
+function save(){localStorage.setItem("korgorenDB",JSON.stringify(db));document.getElementById("status").innerText="Saved ✓ "+new Date().toLocaleTimeString();}
+function load(){let data=localStorage.getItem("korgorenDB");if(data){db=JSON.parse(data);} render();}
+load();
+
+// Navigation
+function show(section){document.querySelectorAll(".card").forEach(c=>c.style.display="none");document.getElementById(section).style.display="block";render();}
+
+// Add entries
+function addLecture(){db.lectures.push({unit:lectureUnit.value,topic:lectureTopic.value,duration:lectureDuration.value,reflection:lectureReflection.value,date:lectureDate.value});save();render();}
+function addRevision(){db.revision.push({unit:revisionUnit.value,topic:revisionTopic.value,duration:revisionDuration.value,method:revisionMethod.value,reflection:revisionReflection.value,date:revisionDate.value});save();render();}
+function addSkill(){db.skills.push({name:skillName.value,duration:skillDuration.value,reflection:skillReflection.value});save();render();}
+function addProject(){db.projects.push({name:projectName.value,duration:projectDuration.value,reflection:projectReflection.value,commit:projectCommit.value});save();render();}
+function addInteraction(){db.interactions.push({person:interactionPerson.value,type:interactionType.value,topic:interactionTopic.value,impact:interactionImpact.value,reflection:interactionReflection.value});save();render();}
+function addTransaction(){db.transactions.push({type:transactionType.value,amount:transactionAmount.value,purpose:transactionPurpose.value});save();render();}
+
+// Render tables
+function render(){
+const today=new Date().toISOString().slice(0,10);
+renderTable(lectureTable,db.lectures.filter(l=>l.date===today),["unit","topic","duration","reflection","date"],["Unit","Topic","Duration","Reflection","Date"]);
+renderTable(revisionTable,db.revision.filter(r=>r.date===today),["unit","topic","duration","method","reflection","date"],["Unit","Topic","Duration","Method","Reflection","Date"]);
+renderTable(skillTable,db.skills.filter(s=>s.date===today || true),["name","duration","reflection"],["Skill","Duration","Reflection"]);
+renderTable(projectTable,db.projects.filter(p=>p.date===today || true),["name","duration","reflection","commit"],["Project","Duration","Reflection","Git Commit"]);
+renderTable(interactionTable,db.interactions.filter(i=>i.date===today || true),["person","type","topic","impact","reflection"],["Person","Type","Topic","Impact","Reflection"]);
+renderTable(transactionTable,db.transactions.filter(t=>t.date===today || true),["type","amount","purpose"],["Type","Amount","Purpose"]);
+renderSummary();
+}
+
+function renderTable(table,data,keys,headers){
+table.innerHTML="<tr>"+headers.map(h=>"<th>"+h+"</th>").join("")+"</tr>";
+data.forEach(d=>{table.innerHTML+="<tr>"+keys.map(k=>d[k]||"").map(v=>"<td>"+v+"</td>").join("")+"</tr>";});
+}
+
+// Render today summary dashboard
+function renderSummary(){
+const today=new Date().toISOString().slice(0,10);
+let html="";
+let lectures=db.lectures.filter(l=>l.date===today);
+let revision=db.revision.filter(r=>r.date===today);
+let skills=db.skills.filter(s=>s.date===today);
+let projects=db.projects.filter(p=>p.date===today);
+let interactions=db.interactions.filter(i=>i.date===today);
+let transactions=db.transactions.filter(t=>t.date===today);
+
+let totalIncome=transactions.filter(t=>t.type==="Income").reduce((a,b)=>a+parseFloat(b.amount||0),0);
+let totalExpense=transactions.filter(t=>t.type==="Expense").reduce((a,b)=>a+parseFloat(b.amount||0),0);
+
+function tableHTML(title,data,keys){if(data.length===0) return `<div class="summary-card"><h4>${title}</h4><p>No entries today</p></div>`; let t=`<div class="summary-card"><h4>${title}</h4><table><tr>`;keys.forEach(k=>{t+="<th>"+k+"</th>";});t+="</tr>";data.forEach(d=>{t+="<tr>"+keys.map(k=>d[k]||"").map(v=>"<td>"+v+"</td>").join("")+"</tr>"});t+="</table></div>"; return t;}
+
+html+=tableHTML("Lectures",lectures,["unit","topic","duration","reflection","date"]);
+html+=tableHTML("Revision",revision,["unit","topic","duration","method","reflection","date"]);
+html+=tableHTML("Skills",skills,["name","duration","reflection"]);
+html+=tableHTML("Projects",projects,["name","duration","reflection","commit"]);
+html+=tableHTML("Interactions",interactions,["person","type","topic","impact","reflection"]);
+if(transactions.length===0) html+=`<div class="summary-card"><h4>Transactions</h4><p>No transactions today</p></div>`;
+else html+=`<div class="summary-card"><h4>Transactions</h4><table><tr><th>Type</th><th>Amount</th><th>Purpose</th></tr>`+transactions.map(t=>`<tr><td>${t.type}</td><td>${t.amount}</td><td>${t.purpose}</td></tr>`).join("")+`</table><p>Total Income: ${totalIncome} | Total Expense: ${totalExpense} | Net: ${totalIncome-totalExpense}</p></div>`;
+
+document.getElementById("summaryCards").innerHTML=html;
+}
+
+// PDF export (today)
+function exportPDF(){
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+doc.setFontSize(18); doc.text("Korgoren Tracker Report (Today)",14,20);
+doc.setFontSize(12); doc.text("Generated: "+new Date().toLocaleString(),14,28);
+const today=new Date().toISOString().slice(0,10);
+
+let sections=[
+{title:"Lectures", data:db.lectures.filter(l=>l.date===today), headers:["Unit","Topic","Duration","Reflection","Date"], keys:["unit","topic","duration","reflection","date"]},
+{title:"Revision", data:db.revision.filter(r=>r.date===today), headers:["Unit","Topic","Duration","Method","Reflection","Date"], keys:["unit","topic","duration","method","reflection","date"]},
+{title:"Skills", data:db.skills.filter(s=>s.date===today), headers:["Skill","Duration","Reflection"], keys:["name","duration","reflection"]},
+{title:"Projects", data:db.projects.filter(p=>p.date===today), headers:["Project","Duration","Reflection","Git Commit"], keys:["name","duration","reflection","commit"]},
+{title:"Interactions", data:db.interactions.filter(i=>i.date===today), headers:["Person","Type","Topic","Impact","Reflection"], keys:["person","type","topic","impact","reflection"]},
+{title:"Transactions", data:db.transactions.filter(t=>t.date===today), headers:["Type","Amount","Purpose"], keys:["type","amount","purpose"]}
+];
+
+let y=35;
+sections.forEach((s,i)=>{
+if(i>0) doc.addPage();
+doc.text(s.title,14,30);
+doc.autoTable({startY:35,head:[s.headers],body:s.data.map(d=>s.keys.map(k=>d[k]))});
+});
+doc.save("Korgoren_Report_Today.pdf");
+}
+</script>
+
+</body>
+</html>
