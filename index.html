@@ -17,11 +17,34 @@
 }
 *{box-sizing:border-box;font-family:Arial,sans-serif;}
 body{margin:0;display:flex;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
-.sidebar{width:220px;background:var(--sidebar);padding:20px;display:flex;flex-direction:column;}
+/* Sidebar */
+.sidebar{
+  width:220px;
+  background:var(--sidebar);
+  color:white;
+  padding:20px;
+  position:fixed;
+  top:0;
+  left:-250px; /* hidden by default */
+  height:100%;
+  overflow:auto;
+  transition: left 0.3s ease;
+  z-index:999;
+}
+.sidebar.show{left:0;}
 .sidebar h2{color:var(--accent);margin-bottom:20px;}
 .sidebar button{background:none;border:none;color:var(--text);padding:10px;margin-bottom:6px;text-align:left;cursor:pointer;border-radius:5px;}
 .sidebar button:hover{background:var(--accent);color:black;}
-.main{flex:1;padding:20px;overflow-y:auto;}
+.main{flex:1;margin-left:0;transition:margin-left 0.3s ease;padding:20px;overflow-y:auto;}
+.main.shift{margin-left:220px;}
+@media(max-width:768px){
+  .main.shift{margin-left:0;} /* overlay on mobile */
+}
+
+/* Hamburger */
+#hamburger{position:fixed;top:15px;left:15px;z-index:1000;cursor:pointer;color:white;font-size:24px;}
+
+/* Cards & forms */
 .card{background:var(--card);padding:15px;margin-bottom:20px;border-radius:10px;}
 input, select, textarea{width:100%;padding:8px;margin:5px 0;border-radius:5px;border:1px solid #1f2937;background:#020617;color:white;}
 textarea{resize:vertical;}
@@ -38,20 +61,25 @@ th,td{border-bottom:1px solid #1f2937;padding:8px;text-align:left;}
 </head>
 <body>
 
-<div class="sidebar">
+<!-- Hamburger -->
+<div id="hamburger">&#9776;</div>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
 <h2>Korgoren Tracker</h2>
-<button onclick="show('dashboard')">Dashboard (Today)</button>
-<button onclick="show('lectures')">Lectures</button>
-<button onclick="show('revision')">Revision</button>
-<button onclick="show('skills')">Skills</button>
-<button onclick="show('projects')">Projects</button>
-<button onclick="show('interactions')">Interactions</button>
-<button onclick="show('transactions')">Transactions</button>
+<button onclick="navigate('dashboard')">Dashboard (Today)</button>
+<button onclick="navigate('lectures')">Lectures</button>
+<button onclick="navigate('revision')">Revision</button>
+<button onclick="navigate('skills')">Skills</button>
+<button onclick="navigate('projects')">Projects</button>
+<button onclick="navigate('interactions')">Interactions</button>
+<button onclick="navigate('transactions')">Transactions</button>
 <hr>
 <button class="action" onclick="exportPDF()">Export PDF (Today)</button>
 <p class="status" id="status">Auto-saving enabled</p>
 </div>
 
+<!-- Main Content -->
 <div class="main">
 
 <!-- Landing Dashboard -->
@@ -169,6 +197,12 @@ th,td{border-bottom:1px solid #1f2937;padding:8px;text-align:left;}
 </div>
 
 <script>
+// Hamburger toggle
+const sidebar=document.getElementById('sidebar');
+const main=document.querySelector('.main');
+const hamburger=document.getElementById('hamburger');
+hamburger.onclick=()=>{sidebar.classList.toggle('show');main.classList.toggle('shift');}
+
 // Initialize database
 let db={lectures:[],revision:[],skills:[],projects:[],interactions:[],transactions:[]};
 function save(){localStorage.setItem("korgorenDB",JSON.stringify(db));document.getElementById("status").innerText="Saved ✓ "+new Date().toLocaleTimeString();}
@@ -176,7 +210,13 @@ function load(){let data=localStorage.getItem("korgorenDB");if(data){db=JSON.par
 load();
 
 // Navigation
-function show(section){document.querySelectorAll(".card").forEach(c=>c.style.display="none");document.getElementById(section).style.display="block";render();}
+function navigate(section){
+  document.querySelectorAll('.main .card').forEach(c=>c.style.display='none');
+  document.getElementById(section).style.display='block';
+  sidebar.classList.remove('show');
+  main.classList.remove('shift');
+  render();
+}
 
 // Add entries
 function addLecture(){db.lectures.push({unit:lectureUnit.value,topic:lectureTopic.value,duration:lectureDuration.value,reflection:lectureReflection.value,date:lectureDate.value});save();render();}
@@ -256,6 +296,5 @@ doc.autoTable({startY:35,head:[s.headers],body:s.data.map(d=>s.keys.map(k=>d[k])
 doc.save("Korgoren_Report_Today.pdf");
 }
 </script>
-
 </body>
 </html>
